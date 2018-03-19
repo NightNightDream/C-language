@@ -27,8 +27,8 @@ void Input(FILE* );// 录入数据
 void Delete(FILE* );
 void Search(FILE* );
 void Addition(FILE* );
-void Menu(FILE* );
-void Back_to_menu(FILE*);
+int Menu(FILE* );
+void Print_date();
 void Clear_area(int ,int , int ,int ); //清空指定区域   前两个参数是指定坐标，后两个是需要清空位置大小
 FILE* Read_file();
 FILE* Creat_file();
@@ -52,29 +52,33 @@ FILE* system_fp;
 
 int main()
 {
-	system_fp = fopen("systemFile.txt","a+"); 
 	FILE* fp;
 	
-	char t;
+	int t = 1;
 	System_initilization();
 	fp = Read_file();
-	Posf(40,20);
-	printf("5秒后自动返回菜单");
+	/*Posf(40,20);
+	printf("5秒后自动进入菜单");
 	Sleep(1000);
 	Posf(40,20);
-	printf("4秒后自动返回菜单");
+	printf("4秒后自动进入菜单");
 	Sleep(1000);
     Posf(40,20);
-	printf("3秒后自动返回菜单");
+	printf("3秒后自动进入菜单");
 	Sleep(1000);
 	Posf(40,20);
-	printf("2秒后自动返回菜单");
-	Sleep(1000);
+	printf("2秒后自动进入菜单");
+	Sleep(1000);*/
 	Posf(40,20);
-	printf("1秒后自动返回菜单");
+	printf("1秒后自动进入菜单");
 	Sleep(1000);
-	Menu(fp);
-	exit(0);
+	while(1)
+    {
+     	t = Menu(fp);
+     	if(t == 0)
+     	break;
+	}	 
+	return 0;
 }
 
 
@@ -107,7 +111,8 @@ void Posf(int x,int y)  //移动光标位置
 	coord.X = x;
 	coord.Y = y;
 	hout = GetStdHandle(STD_OUTPUT_HANDLE);
-	SetConsoleCursorPosition(hout,coord);
+	SetConsoleCursorPosition(hout,coord); 
+	
 }
 
 void Print_interface()  //打印框框 
@@ -166,6 +171,11 @@ void Input(FILE* fp)
 		}
 		else if( k == 1) //判断是刚刚进入输入系统吗 
 		{
+			Posf(11,++n);
+			printf("是否继续输入？");
+		    t = getch();
+		    if( t != 'y')
+		    break;
 			p1 = (PNODE)malloc(SS);
 			Posf(11,++n);
 		    printf("请输入：");
@@ -204,9 +214,9 @@ void Input(FILE* fp)
 	p3 = p2;
 	else
 	p3 = head->next;
-	for(p3; p3 != NULL; p3 = p3->next)
-	fprintf(fp,"%16s%16s%16d%16d%16d%16d%16s\n",p3->comType,p3->comName,p3->comNumber,p3->purchasePrice,p3->sellPrice,p3->comQuantity,p3->supplier_name);
-	Menu(fp);
+	for(; p3 != NULL; p3 = p3->next)
+	//fwrite(p3,sizeof(NODE),1,fp);
+	return ; 
 }
 	
 
@@ -214,17 +224,19 @@ void Delete(FILE *fp)
 {
 	system("cls");
 	Print_interface();
-	Back_to_menu(fp);
+	//Back_to_menu(fp);
+	fflush(stdin);//清空输入缓冲区 
+	
 	
 	PNODE p1, p2;
 	int n, i = 6;
 	Posf(18,++i);
 	printf("请直接输入商品编号(任意字母键退出)：");
 	
-	while(scanf("%d",n) != 0)
+	while(scanf("%d",&n) != 0)
 	{
 		
-	    for(p2 = head,p1 = head->next; p1->next != NULL; p1 = p1->next)
+	    for(p2 = head,p1 = head->next; p1 != NULL; p1 = p1->next)
 	    {
 		    if(p1->comNumber == n)
 		    {
@@ -246,7 +258,7 @@ void Delete(FILE *fp)
 	Posf(40,20);
 	printf("1秒后自动返回菜单");
 	Sleep(1000);
-	Menu(fp);
+	return ;
 }
 
 void Addition(FILE* fp)
@@ -262,14 +274,23 @@ void Search(FILE* fp)
 	system("cls");
 	Print_interface();
 	
+	Posf(12,5);
+	Print_date();
+	//getchar();
+	Sleep(2000);
+	return ;
+	
 	
 }
 
-void Menu(FILE* fp)
+int Menu(FILE* fp)
 {
 	system("cls"); //清空界面 
 	Print_interface();//打印框框 
+	fflush(stdin);//清空输入缓冲区 
 	
+	Posf(44,6);
+	printf("按q键退出！");
 	char c;
 	Posf(20,10);
 	printf("1、按[i]键进入商品录入"); 
@@ -286,7 +307,7 @@ void Menu(FILE* fp)
 			Input(fp);
 			break;
 		case 's':
-			//Serach(fp);
+			Search(fp);
 			break;
 		case 'd':
 			Delete(fp);
@@ -296,35 +317,19 @@ void Menu(FILE* fp)
 			break;
 		default :
 			fclose(fp);
-			exit(0);
+			return 0;  //0代表退出程序 
 			
 	}
-    /*
-	Posf(20,18);
-	
-	Posf(55,10);
-	
-	*/
+    return 1; //重新进入菜单 
 }
 
-void Back_to_menu(FILE* fp)
-{
-	char t;
-	Posf(20,3); 
-	printf("按错了？是否直接退回菜单？ （按任意键继续，y 退回到菜单）");
-	t = getch();
-	if(t == 'y')
-	{
-	    Menu(fp);
-    }
-    Clear_area(20,3,56,1); //清除上面提示的内容 
-}
+
 
 void Clear_area(int x,int y,int len,int wid)
 {
-	Posf(x,y);
 	for(int i = 0; i < wid; i++)
 	{
+		Posf(x,++y);
 		for(int j = 0; j < len; j++)
 		printf(" ");
 	}
@@ -334,10 +339,12 @@ void Clear_area(int x,int y,int len,int wid)
 FILE* Read_file()
  {
  	FILE* fp;
- 	char fileName[16];
- 	system_fp =fopen("systemFile.txt","rw+");
- 	fscanf(system_fp,"%s",fileName);
- 	if((fp = fopen(fileName,"a+")) == NULL )
+ 	char fileName[16] = {0}, ch;
+ 	system_fp =fopen("systemFile.txt","a+");
+ 	fseek(system_fp,0L,SEEK_END);  
+ 	
+ 	
+ 	if(ftell(system_fp) == 0)
  	{
  		system("cls");
  		Posf(34,10);
@@ -345,11 +352,25 @@ FILE* Read_file()
  		Sleep(1500);
  		fp = Creat_file();
  		fclose(system_fp);
- 		//fclose(fp);
  		return fp;
 	 }
+	 else
+	 {
+	 	fseek(system_fp,0L,SEEK_SET);
+	 	fscanf(system_fp,"%s",fileName);
+	 	//fgets(fileName,15,system_fp);
+	 	//fileName[10] = '\0';
+	 	//printf("%c",fileName[4]);
+	 	//getchar();
+	    if((fp = fopen(fileName,"a+")) == NULL)
+	    {
+	    	//Clear_area(40,13,20,5);
+	    	Posf(40,15);
+	    	printf("打开文件失败！");
+	    	return NULL;
+		}
+	 }
 	 fclose(system_fp);
-	 //fclose(fp);
 	 return fp;
  }
 
@@ -364,7 +385,7 @@ FILE* Creat_file()
 	printf("┈┈┈┈┈┈");
 	Posf(46,14); 
 	printf("┆");
-	Posf(60,14);
+	Posf(54,14);
 	printf("┆");
 	char fileName[16];
 	Posf(48,14);
@@ -379,3 +400,18 @@ FILE* Creat_file()
     }
 }
 
+void Print_date()
+{
+	PNODE p1,p2;
+	int n = 5;
+	if(head == NULL || head->next == NULL)  //如果头指针或下一节为空，说明没有数据 
+	{
+	    printf("没有数据储存！");
+	    return;
+	}
+	for(p1 = head->next; p1 != NULL; p1 = p1->next)
+	{
+		Posf(14,++n);
+		printf("%10s%10s%6d%6d%6d%6d%10s",p1->comType,p1->comName,p1->comNumber,p1->purchasePrice,p1->sellPrice,p1->comQuantity,p1->supplier_name);
+	}
+}
