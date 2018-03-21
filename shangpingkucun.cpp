@@ -18,6 +18,7 @@
 #include<windows.h>
 #include <conio.h>
 
+
 #define SS sizeof(NODE)
 
 void System_initilization(); //系统初始化 
@@ -26,12 +27,13 @@ void Print_interface(); //打印界面
 void Input(FILE* );// 录入数据 
 void Delete(FILE* );
 void Search(FILE* );
-void Addition(FILE* );
+void Save(FILE* );
 int Menu(FILE* );
 void Print_date();
 void Clear_area(int ,int , int ,int ); //清空指定区域   前两个参数是指定坐标，后两个是需要清空位置大小
 FILE* Read_file();
 FILE* Creat_file();
+void Read_date(FILE *);
  
 typedef struct node{
 	int comNumber; //商品编号
@@ -46,17 +48,17 @@ typedef struct node{
 
 HANDLE hout;
 PNODE head = NULL;
-FILE* system_fp;
-
+PNODE p2 = NULL;
+FILE* system_fp; //储存用户数据 
+char fileName[16]; //全局变量 储存文件名  一开始找到文件读取数据   或   在储存函数中找到数据文件并按照链表中的数据更新文件 
 
 
 int main()
 {
 	FILE* fp;
-	
 	int t = 1;
 	System_initilization();
-	fp = Read_file();
+	fp = Read_file();  //读取文件中的数据到链表中 
 	/*Posf(40,20);
 	printf("5秒后自动进入菜单");
 	Sleep(1000);
@@ -77,7 +79,9 @@ int main()
      	t = Menu(fp);
      	if(t == 0)
      	break;
-	}	 
+    }
+	
+	
 	return 0;
 }
 
@@ -149,7 +153,7 @@ void Input(FILE* fp)
 	
     char t;
     int n = 7;//控制输入行
-	int k = 1, b = 2; // 判断是刚刚进入输入系统吗 
+	int k = 1; // 判断是刚刚进入输入系统吗 
     
     //Back_to_menu();
     
@@ -157,19 +161,17 @@ void Input(FILE* fp)
 	printf("输入格式：   类型    名称    编号    进价    售价    数量    供货商"); 
 	
 	PNODE p1,p3;
-	static PNODE p2;
 	
 
     while(1)
     {
-    	if(head == NULL)
+    	if(head == NULL) //如果文件没有数据且head为空   用户第一次输入 
     	{
     		p1 = (PNODE)malloc(SS);
     		head = p1;
     		k++;
-    		b--;
 		}
-		else if( k == 1) //判断是刚刚进入输入系统吗 
+		else if( k == 1) //判断是第一次进入输入系统吗  用来连接输入数据到上次的链表尾 
 		{
 			Posf(11,++n);
 			printf("是否继续输入？");
@@ -180,7 +182,7 @@ void Input(FILE* fp)
 			Posf(11,++n);
 		    printf("请输入：");
 		    scanf("%s",p1->comType);
-		    scanf("%s",p1->comName);
+		    scanf("%s",p1->comName);            
 		    scanf("%d",&p1->comNumber);
 		    scanf("%d",&p1->purchasePrice);
 		    scanf("%d",&p1->sellPrice);
@@ -210,12 +212,7 @@ void Input(FILE* fp)
 	}
 	p2->next = NULL;
 	free(p1);
-	if (b == 2)//是否是第一次进入输入 
-	p3 = p2;
-	else
-	p3 = head->next;
-	for(; p3 != NULL; p3 = p3->next)
-	//fwrite(p3,sizeof(NODE),1,fp);
+	
 	return ; 
 }
 	
@@ -261,12 +258,33 @@ void Delete(FILE *fp)
 	return ;
 }
 
-void Addition(FILE* fp)
+void Save(FILE* fp)
 {
 	system("cls");
 	Print_interface();
 	
+	system("cls");
+    Posf(40,7);
+    if((fp = fopen(fileName,"w")) == NULL)
+    {
+		printf("保存文件失败！");
+		Sleep(1000);
+		return ;
+	}
+	/*
+	保存文件 
+	*/
+    PNODE p1;
+    p1 = head->next;
+    for(; p1 != NULL; p1 = p1->next)
+    {
+    	fwrite(p1,sizeof(NODE),1,fp);
+	}
+	fclose(fp);
+	printf("保存文件成功！");
+	Sleep(1000);
 	
+	return ;
 }
 
 void Search(FILE* fp)
@@ -276,8 +294,15 @@ void Search(FILE* fp)
 	
 	Posf(12,5);
 	Print_date();
+	
+	Posf(11,22);
+	printf("----------------------------------------------------------------------------");
+	Posf(24,23);
+	printf("按[h]键价格从高到低");
+	Posf(52,23);
+	printf("按[l]键价格从低到高");
 	//getchar();
-	Sleep(2000);
+	Sleep(3000);
 	return ;
 	
 	
@@ -299,7 +324,7 @@ int Menu(FILE* fp)
 	Posf(20,18);
 	printf("3、按[d]键进入商品删除");
 	Posf(55,18);
-	printf("4、按[a]键进入商品添加");
+	printf("4、按[b]键商品数据保存");
 	c = getch();
 	switch(c)
 	{
@@ -312,11 +337,10 @@ int Menu(FILE* fp)
 		case 'd':
 			Delete(fp);
 			break;
-		case 'a':
-			//Addition(fp);
+		case 'b':
+			Save(fp);
 			break;
 		default :
-			fclose(fp);
 			return 0;  //0代表退出程序 
 			
 	}
@@ -339,7 +363,7 @@ void Clear_area(int x,int y,int len,int wid)
 FILE* Read_file()
  {
  	FILE* fp;
- 	char fileName[16] = {0}, ch;
+ 	char ch;
  	system_fp =fopen("systemFile.txt","a+");
  	fseek(system_fp,0L,SEEK_END);  
  	
@@ -358,16 +382,17 @@ FILE* Read_file()
 	 {
 	 	fseek(system_fp,0L,SEEK_SET);
 	 	fscanf(system_fp,"%s",fileName);
-	 	//fgets(fileName,15,system_fp);
-	 	//fileName[10] = '\0';
-	 	//printf("%c",fileName[4]);
-	 	//getchar();
+	 	
 	    if((fp = fopen(fileName,"a+")) == NULL)
 	    {
-	    	//Clear_area(40,13,20,5);
 	    	Posf(40,15);
 	    	printf("打开文件失败！");
+	    	Sleep(1500);
 	    	return NULL;
+		}
+		else
+		{
+			Read_date(fp);
 		}
 	 }
 	 fclose(system_fp);
@@ -387,7 +412,7 @@ FILE* Creat_file()
 	printf("┆");
 	Posf(54,14);
 	printf("┆");
-	char fileName[16];
+	
 	Posf(48,14);
     scanf("%s", fileName);
     strcat(fileName, ".txt");//连接两个字符串 
@@ -403,6 +428,8 @@ FILE* Creat_file()
 void Print_date()
 {
 	PNODE p1,p2;
+	Posf(14,5);
+	printf("商品类型   商品名称      编号    进价    售价    数量    供货商");
 	int n = 5;
 	if(head == NULL || head->next == NULL)  //如果头指针或下一节为空，说明没有数据 
 	{
@@ -412,6 +439,35 @@ void Print_date()
 	for(p1 = head->next; p1 != NULL; p1 = p1->next)
 	{
 		Posf(14,++n);
-		printf("%10s%10s%6d%6d%6d%6d%10s",p1->comType,p1->comName,p1->comNumber,p1->purchasePrice,p1->sellPrice,p1->comQuantity,p1->supplier_name);
+		printf("%-10s%-10s\t%-8d%-8d%-8d%-8d%-10s",p1->comType,p1->comName,p1->comNumber,p1->purchasePrice,p1->sellPrice,p1->comQuantity,p1->supplier_name);
 	}
 }
+
+void Read_date(FILE *fp)
+{
+	PNODE p1;
+	if(feof(fp))
+	{
+		return ;
+	}
+	else
+	{
+		p1 = p2 = (PNODE)malloc(SS);
+		head = p1;
+		for(; feof(fp) == NULL;)
+		{
+			p2 = p1;
+		    p1 = (PNODE)malloc(SS);
+		    fread(p1,sizeof(NODE),1,fp);
+		    p2->next  = p1;
+		    
+	    }
+	}
+	p2->next = NULL;
+	free(p1);
+}
+/*
+void Sort_price_HtoL()
+{
+	PNODE
+}*/
